@@ -25,8 +25,8 @@
 ## 🚀 Quick Start
 
 1. Install the package:
-   ```bash
-   npm install @hedystia/astro-bun
+```bash
+npm install @hedystia/astro-bun
 ```
 
 2. Add it to your Astro config:
