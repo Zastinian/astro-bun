@@ -12,6 +12,18 @@
   "bugs": {
     "url": "https://github.com/Zastinian/astro-bun/issues"
   },
+  "keywords": [
+    "withastro",
+    "astro",
+    "bun",
+    "performance",
+    "speed",
+    "fast",
+    "lightning-fast",
+    "adapter",
+    "astro-adapter",
+    "astro-integration"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "tsup": "^8.3.5",
