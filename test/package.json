@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "name": "test",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@hedystia/astro-bun": "file:../package",
+    "astro": "^5.0.2"
+  }
+}
