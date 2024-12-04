@@ -1,5 +1,7 @@
 <div align="center">
-  # 🚀 @hedystia/astro-bun
+  <p>
+    <strong>🚀 @hedystia/astro-bun</strong>
+  </p>
 
   <p>
     <strong>Supercharge your Astro projects with the power of Bun! 🌟</strong>
