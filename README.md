@@ -19,7 +19,7 @@
 - 🚄 **Lightning-fast** performance with Bun integration
 - 🔧 **Easy setup** - get started in minutes
 - 🔄 **Seamless compatibility** with Astro projects
-- 🖥️ **Cross-platform support** - runs on Unix-like systems
+- 🛠️ **Unix socket support** - easily run your Bun server with Unix sockets
 - 🛠️ **Flexible configuration** options
 
 ## 🚀 Quick Start
