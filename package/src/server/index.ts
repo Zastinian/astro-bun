@@ -72,14 +72,14 @@ function handler(
 
   const app = new App(manifest);
 
-  return (req: Request) => {
+  return async (req: Request, server: Server) => {
     const routeData = app.match(req);
     if (!routeData) {
       const url = new URL(req.url);
 
       const manifestAssetExists = manifest.assets.has(url.pathname);
 
-      if (!manifestAssetExists || req.url.endsWith("/")) {
+      if (!manifestAssetExists || url.pathname.endsWith("/")) {
         const localPath = new URL(`./${app.removeBase(url.pathname)}/index.html`, clientRoot);
         return serveStaticFile(url.pathname, localPath, clientRoot, options);
       }
@@ -90,9 +90,12 @@ function handler(
       }
     }
 
+    const clientAddress = server.requestIP(req)?.address || "";
+
     return app.render(req, {
       addCookieHeader: true,
       routeData,
+      clientAddress,
     });
   };
 }

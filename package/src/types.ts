@@ -23,3 +23,7 @@ interface OptionsSchema {
 }
 
 export type Options = OptionsSchema;
+
+export interface BunSSROptions {
+  clientAddress: string;
+}
