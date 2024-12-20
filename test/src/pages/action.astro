@@ -1,0 +1,13 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout>
+    <h1>This is an action page</h1>
+</Layout>
+
+<script>
+    import { actions } from "astro:actions";
+    const { data, error } = await actions.setName({ name: "User" });
+    if (!error) alert(data);
+</script>
