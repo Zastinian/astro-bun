@@ -1,29 +1,12 @@
 {
   "name": "@hedystia/astro-bun",
-  "version": "0.1.2",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "license": "MIT",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Zastinian/astro-bun.git"
+    "url": "git+https://github.com/Zastinian/astro-bun.git"
   },
-  "homepage": "https://github.com/Zastinian/astro-bun",
-  "bugs": {
-    "url": "https://github.com/Zastinian/astro-bun/issues"
-  },
-  "keywords": [
-    "withastro",
-    "astro",
-    "bun",
-    "performance",
-    "speed",
-    "fast",
-    "lightning-fast",
-    "adapter",
-    "astro-adapter",
-    "astro-integration"
-  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "devDependencies": {
     "@types/bun": "^1.1.14",
     "tsup": "^8.3.5",
@@ -31,11 +14,6 @@
   },
   "peerDependencies": {
     "astro": "^5.0.0"
-  },
-  "peerDependenciesMeta": {
-    "astro": {
-      "optional": false
-    }
   },
   "exports": {
     ".": {
@@ -48,7 +26,31 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist"],
+  "bugs": {
+    "url": "https://github.com/Zastinian/astro-bun/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/Zastinian/astro-bun",
+  "keywords": [
+    "withastro",
+    "astro",
+    "bun",
+    "performance",
+    "speed",
+    "fast",
+    "lightning-fast",
+    "adapter",
+    "astro-adapter",
+    "astro-integration"
+  ],
+  "license": "MIT",
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": false
+    }
+  },
   "publishConfig": {
     "access": "public"
   },
