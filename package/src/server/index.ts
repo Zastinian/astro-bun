@@ -30,7 +30,7 @@ export function start(manifest: SSRManifest, options: Options) {
   const isUnixSocket = typeof options.host === "string" && options.host.endsWith(".sock");
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const serverOptions: any = {
-    development: import.meta.env.DEV,
+    development: process.env.APP_ENV === "development" || process.env.NODE_ENV === "development",
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     error: (error: { stack: any }) =>
       new Response(`<pre>${error}\n${error.stack}</pre>`, {
@@ -90,7 +90,7 @@ function handler(
       }
     }
 
-    const clientAddress = server.requestIP(req)?.address || "";
+    const clientAddress = server.requestIP(req)?.address || "127.0.0.1";
 
     return app.render(req, {
       addCookieHeader: true,
