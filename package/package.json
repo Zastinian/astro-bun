@@ -1,6 +1,6 @@
 {
   "name": "@hedystia/astro-bun",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "license": "MIT",
@@ -25,9 +25,9 @@
     "astro-integration"
   ],
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "^1.1.14",
     "tsup": "^8.3.5",
-    "typescript": "^5.0.0"
+    "typescript": "^5.7.2"
   },
   "peerDependencies": {
     "astro": "^5.0.0"
