@@ -2,19 +2,13 @@ import type { AstroAdapter, AstroIntegration } from "astro";
 import { AstroError } from "astro/errors";
 
 import { name as packageName } from "../package.json";
-import { CreateExportsEnum } from "./types";
 
 import type { Options } from "./types";
 
 export function getAdapter(args: Options): AstroAdapter {
   return {
     args,
-    exports: [
-      CreateExportsEnum.HANDLE,
-      CreateExportsEnum.RUNNING,
-      CreateExportsEnum.START,
-      CreateExportsEnum.STOP,
-    ] satisfies Array<CreateExportsEnum>,
+    exports: ["handle", "running", "start", "stop"],
     name: packageName,
     serverEntrypoint: `${packageName}/server.js`,
     adapterFeatures: {
