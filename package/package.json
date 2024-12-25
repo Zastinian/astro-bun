@@ -1,6 +1,6 @@
 {
   "name": "@hedystia/astro-bun",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Zastinian/astro-bun.git"
@@ -17,11 +17,11 @@
   },
   "exports": {
     ".": {
-      "default": "./dist/index.js",
+      "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./server.js": {
-      "default": "./dist/server.js",
+      "import": "./dist/server.js",
       "types": "./dist/server.d.ts"
     },
     "./package.json": "./package.json"
