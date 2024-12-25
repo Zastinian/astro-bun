@@ -1,20 +1,17 @@
 /// <reference types="astro/client" />
 
 import { App } from "astro/app";
-
 import { extractHostname, serveStaticFile } from "./utils";
-
 import type { SSRManifest } from "astro";
 import type { Server } from "bun";
+import type { Options } from "../types";
 
-import type { CreateExports, Options } from "../types";
-
-export function createExports(manifest: SSRManifest, options: Options): CreateExports {
+export function createExports(manifest: SSRManifest, options: Options) {
   return {
     handle: handler(manifest, options),
-    running: () => _server !== null,
-    start: () => start(manifest, options),
-    stop: () => {
+    running: (): boolean => _server !== null,
+    start: (): void => start(manifest, options),
+    stop: (): void => {
       if (!_server) return;
       _server.stop();
       _server = null;
@@ -31,11 +28,12 @@ export function start(manifest: SSRManifest, options: Options) {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const serverOptions: any = {
     development: process.env.APP_ENV === "development" || process.env.NODE_ENV === "development",
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    error: (error: { stack: any }) =>
-      new Response(`<pre>${error}\n${error.stack}</pre>`, {
+    error: (error: Error) => {
+      return new Response(`<pre>${error}\n${error.stack}</pre>`, {
         headers: { "Content-Type": "text/html" },
-      }),
+        status: 500,
+      });
+    },
     fetch: handler(manifest, options),
   };
 
@@ -50,14 +48,17 @@ export function start(manifest: SSRManifest, options: Options) {
 
   _server = Bun.serve(serverOptions);
 
-  function exit() {
-    if (_server) _server.stop();
-    process.exit();
-  }
+  const cleanup = () => {
+    if (_server) {
+      _server.stop();
+      _server = null;
+    }
+    process.exit(0);
+  };
 
-  process.on("SIGINT", exit);
-  process.on("SIGTERM", exit);
-  process.on("exit", exit);
+  process.on("SIGINT", cleanup);
+  process.on("SIGTERM", cleanup);
+  process.on("exit", cleanup);
 
   logger.info(
     `Server listening on ${isUnixSocket ? `unix socket: ${options.host}` : _server.url.href}`,
