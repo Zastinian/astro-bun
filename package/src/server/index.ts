@@ -70,15 +70,21 @@ function handler(
   options: Options,
 ): (req: Request, server: Server) => Promise<Response> {
   const clientRoot = options.client ?? new URL("../client/", import.meta.url).href;
-
   const app = new App(manifest);
 
   return async (req: Request, server: Server) => {
     const routeData = app.match(req);
     if (!routeData) {
       const url = new URL(req.url);
-
       const manifestAssetExists = manifest.assets.has(url.pathname);
+
+      const exactPath = new URL(`./${app.removeBase(url.pathname)}`, clientRoot);
+      const exactFile = Bun.file(exactPath);
+      const exactFileExists = await exactFile.exists();
+
+      if (exactFileExists) {
+        return serveStaticFile(url.pathname, exactPath, clientRoot, options);
+      }
 
       if (!manifestAssetExists || url.pathname.endsWith("/")) {
         const localPath = new URL(`./${app.removeBase(url.pathname)}/index.html`, clientRoot);
