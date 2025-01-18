@@ -3,7 +3,7 @@ import { AstroError } from "astro/errors";
 
 import { name as packageName } from "../package.json";
 
-import type { Options } from "./types";
+import type { Options, UserOptions } from "./types";
 
 export function getAdapter(args: Options): AstroAdapter {
   return {
@@ -25,7 +25,7 @@ export function getAdapter(args: Options): AstroAdapter {
   };
 }
 
-export default function createIntegration(): AstroIntegration {
+export default function createIntegration(userOptions?: UserOptions): AstroIntegration {
   return {
     name: packageName,
     hooks: {
@@ -46,6 +46,7 @@ export default function createIntegration(): AstroIntegration {
             host: config.server.host,
             port: config.server.port,
             server: config.build.server?.toString(),
+            ...userOptions,
           }),
         );
 
