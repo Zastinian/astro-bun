@@ -11,6 +11,6 @@
   },
   "dependencies": {
     "@hedystia/astro-bun": "file:../package",
-    "astro": "^5.0.2"
+    "astro": "^5.1.7"
   }
 }
