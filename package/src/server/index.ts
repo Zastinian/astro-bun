@@ -4,6 +4,8 @@ import { App } from "astro/app";
 import { extractHostname, serveStaticFile } from "./utils";
 import type { SSRManifest } from "astro";
 import type { Server } from "bun";
+import cluster from "cluster";
+import os from "os";
 import type { Options } from "../types";
 
 export function createExports(manifest: SSRManifest, options: Options) {
@@ -21,48 +23,98 @@ export function createExports(manifest: SSRManifest, options: Options) {
 
 let _server: Server | null = null;
 export function start(manifest: SSRManifest, options: Options) {
-  const app = new App(manifest);
-  const logger = app.getAdapterLogger();
-
-  const isUnixSocket = typeof options.host === "string" && options.host.endsWith(".sock");
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const serverOptions: any = {
-    development: process.env.APP_ENV === "development" || process.env.NODE_ENV === "development",
-    error: (error: Error) => {
-      return new Response(`<pre>${error}\n${error.stack}</pre>`, {
-        headers: { "Content-Type": "text/html" },
-        status: 500,
-      });
-    },
-    fetch: handler(manifest, options),
-  };
-
-  if (isUnixSocket) {
-    serverOptions.unix = options.host;
-  } else {
-    const hostname = process.env.HOST ?? extractHostname(options.host);
-    const port = process.env.PORT ? Number.parseInt(process.env.PORT) : options.port;
-    serverOptions.hostname = hostname;
-    serverOptions.port = port;
-  }
-
-  _server = Bun.serve(serverOptions);
-
-  const cleanup = () => {
-    if (_server) {
-      _server.stop();
-      _server = null;
+  if (cluster.isPrimary && options.cluster) {
+    const numCPUs = os.cpus().length;
+    for (let i = 0; i < numCPUs; i++) {
+      cluster.fork();
     }
-    process.exit(0);
-  };
+    cluster.on("exit", (worker, _code, _signal) => {
+      console.warn(`Worker ${worker.process.pid} died`);
+      cluster.fork();
+    });
+  } else {
+    const app = new App(manifest);
+    const logger = app.getAdapterLogger();
 
-  process.on("SIGINT", cleanup);
-  process.on("SIGTERM", cleanup);
-  process.on("exit", cleanup);
+    const isUnixSocket = typeof options.host === "string" && options.host.endsWith(".sock");
 
-  logger.info(
-    `Server listening on ${isUnixSocket ? `unix socket: ${options.host}` : _server.url.href}`,
-  );
+    interface UnixConfig {
+      unix: string;
+      hostname?: never;
+      port?: never;
+      reusePort?: never;
+      idleTimeout?: never;
+    }
+
+    interface HostConfig {
+      unix?: never;
+      hostname: string;
+      port: number;
+      reusePort?: boolean;
+      idleTimeout?: number;
+    }
+
+    type UnixOrHost = UnixConfig | HostConfig;
+
+    const serverOptions: UnixOrHost = isUnixSocket
+      ? {
+          unix: String(process.env.UNIX_SOCKET ?? options.host),
+        }
+      : {
+          hostname: process.env.HOST ?? extractHostname(options.host) ?? "127.0.0.1",
+          port: process.env.PORT ? Number.parseInt(process.env.PORT) : options.port,
+          reusePort: !options.cluster
+            ? process.env.REUSE_PORT
+              ? Boolean(process.env.REUSE_PORT)
+              : (options.reusePort ?? false)
+            : true,
+          idleTimeout: process.env.IDLE_TIMEOUT
+            ? Number.parseInt(process.env.IDLE_TIMEOUT)
+            : (options.idleTimeout ?? 10),
+        };
+
+    _server = Bun.serve({
+      development: process.env.APP_ENV === "development" || process.env.NODE_ENV === "development",
+      error: (error: Error) => {
+        logger.error(`${error}`);
+        return new Response(`<pre>${error}\n${error.stack}</pre>`, {
+          headers: { "Content-Type": "text/html" },
+          status: 500,
+        });
+      },
+      lowMemoryMode: process.env.LOW_MEMORY_MODE
+        ? Boolean(process.env.LOW_MEMORY_MODE)
+        : (options.lowMemoryMode ?? false),
+      maxRequestBodySize: process.env.MAX_REQUEST_BODY_SIZE
+        ? Number.parseInt(process.env.MAX_REQUEST_BODY_SIZE)
+        : (options.maxRequestBodySize ?? 1024 * 1024 * 128),
+      fetch: handler(manifest, options),
+      tls: {
+        cert: process.env.TLS_CERT_PATH ?? options.tls?.certPath,
+        key: process.env.TLS_KEY_PATH ?? options.tls?.keyPath,
+        lowMemoryMode: process.env.LOW_MEMORY_MODE
+          ? Boolean(process.env.LOW_MEMORY_MODE)
+          : (options.lowMemoryMode ?? false),
+      },
+      ...serverOptions,
+    });
+
+    const cleanup = () => {
+      if (_server) {
+        _server.stop();
+        _server = null;
+      }
+      process.exit(0);
+    };
+
+    process.on("SIGINT", cleanup);
+    process.on("SIGTERM", cleanup);
+    process.on("exit", cleanup);
+
+    logger.info(
+      `Server listening on ${isUnixSocket ? `unix socket: ${options.host}` : _server.url.href}`,
+    );
+  }
 }
 
 function handler(
