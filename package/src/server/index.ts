@@ -125,28 +125,105 @@ function handler(
   const app = new App(manifest);
 
   return async (req: Request, server: Server) => {
+    const url = new URL(req.url);
+
+    const isStaticAsset = (pathname: string): boolean => {
+      if (manifest.assets.has(pathname)) {
+        return true;
+      }
+
+      const assetsPrefix = `/${options.assets}/`;
+      if (pathname.startsWith(assetsPrefix)) {
+        return true;
+      }
+
+      const staticExtensions = [
+        ".js",
+        ".css",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".svg",
+        ".ico",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".pdf",
+        ".zip",
+        ".webp",
+        ".avif",
+        ".mp4",
+        ".webm",
+        ".mp3",
+        ".wav",
+        ".ogg",
+        ".json",
+        ".xml",
+        ".txt",
+      ];
+      const hasStaticExtension = staticExtensions.some((ext) =>
+        pathname.toLowerCase().endsWith(ext),
+      );
+
+      return hasStaticExtension;
+    };
+
+    if (isStaticAsset(url.pathname)) {
+      const clientPath = new URL(`.${url.pathname}`, clientRoot);
+      const clientFile = Bun.file(clientPath);
+      const clientFileExists = await clientFile.exists();
+
+      if (clientFileExists) {
+        return serveStaticFile(url.pathname, clientPath, clientRoot, options);
+      }
+
+      const basePath = new URL(`./${app.removeBase(url.pathname)}`, clientRoot);
+      return serveStaticFile(url.pathname, basePath, clientRoot, options);
+    }
+
     const routeData = app.match(req);
+
     if (!routeData) {
-      const url = new URL(req.url);
-      const manifestAssetExists = manifest.assets.has(url.pathname);
+      const clientPath = new URL(`.${url.pathname}`, clientRoot);
+      const clientFile = Bun.file(clientPath);
+      const clientFileExists = await clientFile.exists();
 
-      const exactPath = new URL(`./${app.removeBase(url.pathname)}`, clientRoot);
-      const exactFile = Bun.file(exactPath);
-      const exactFileExists = await exactFile.exists();
-
-      if (exactFileExists) {
-        return serveStaticFile(url.pathname, exactPath, clientRoot, options);
+      if (clientFileExists) {
+        return serveStaticFile(url.pathname, clientPath, clientRoot, options);
       }
 
-      if (!manifestAssetExists || url.pathname.endsWith("/")) {
-        const localPath = new URL(`./${app.removeBase(url.pathname)}/index.html`, clientRoot);
-        return serveStaticFile(url.pathname, localPath, clientRoot, options);
+      const basePath = new URL(`./${app.removeBase(url.pathname)}`, clientRoot);
+      const baseFile = Bun.file(basePath);
+      const baseFileExists = await baseFile.exists();
+
+      if (baseFileExists) {
+        return serveStaticFile(url.pathname, basePath, clientRoot, options);
       }
 
-      if (manifestAssetExists) {
-        const localPath = new URL(app.removeBase(url.pathname), clientRoot);
-        return serveStaticFile(url.pathname, localPath, clientRoot, options);
+      const tryIndexPaths = [
+        url.pathname.endsWith("/") ? new URL(`.${url.pathname}index.html`, clientRoot) : null,
+        !url.pathname.endsWith("/") ? new URL(`.${url.pathname}/index.html`, clientRoot) : null,
+        url.pathname.endsWith("/")
+          ? new URL(`./${app.removeBase(url.pathname)}index.html`, clientRoot)
+          : null,
+        !url.pathname.endsWith("/")
+          ? new URL(`./${app.removeBase(url.pathname)}/index.html`, clientRoot)
+          : null,
+      ].filter(Boolean) as URL[];
+
+      for (const indexPath of tryIndexPaths) {
+        const indexFile = Bun.file(indexPath);
+        const indexExists = await indexFile.exists();
+
+        if (indexExists) {
+          return serveStaticFile(url.pathname, indexPath, clientRoot, options);
+        }
       }
+
+      const notFoundPath = new URL(`.${url.pathname}`, clientRoot);
+      return serveStaticFile(url.pathname, notFoundPath, clientRoot, options);
     }
 
     const clientAddress = server.requestIP(req)?.address || "127.0.0.1";
